@@ -93,9 +93,17 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if not self.devURL and not self._error:
             result = await self.device.activate(timeout=self.timeout)
             if not result:
-                self._error = HAVSCodeAuthenticationException()
-            else:
-                self.devURL = result
+                if self.device.isRunning():
+                    return await self._show_config_form(
+                        _user_input, errors={"base": "authentication_pending"}
+                    )
+                self.log.warning(
+                    "VS Code CLI exited before reporting a tunnel URL (exit code %s)",
+                    self.device.proc.returncode if self.device.proc else None,
+                )
+                await self.hass.async_add_executor_job(self.device.stopTunnel)
+                return self.async_abort(reason="tunnel_exited")
+            self.devURL = result
 
         if self._error:
             await self.hass.async_add_executor_job(self.device.stopTunnel)
@@ -125,7 +133,7 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if self.device:
             self.hass.async_add_executor_job(self.device.stopTunnel)
 
-    async def _show_config_form(self, user_input):
+    async def _show_config_form(self, user_input, errors=None):
         """Show the configuration form to edit location data."""
 
         self.activate = True
@@ -133,6 +141,7 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=None,
+            errors=errors,
             description_placeholders={
                 "url": "https://github.com/login/device",
                 "token": self.oauthToken,
@@ -246,6 +255,16 @@ class HAVSCodeOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_reauth(self, user_input=None):
         if user_input is not None:
             url = await self.device.getDevURL(self.timeout)
+            if url is None and self.device.isRunning():
+                return self.async_show_form(
+                    step_id="reauth",
+                    data_schema=None,
+                    errors={"base": "authentication_pending"},
+                    description_placeholders={
+                        "token": self.oauthToken,
+                        "url": "https://github.com/login/device",
+                    },
+                )
             await self.hass.async_add_executor_job(self.device.stopTunnel)
             if url is None:
                 return self.async_abort(reason="reauth_error")

@@ -1,11 +1,11 @@
-# HA VSCode Tunnel – herstelversie 0.1.51
+# HA VSCode Tunnel – herstelversie 0.1.52
 
 Dit is een aangepaste testversie op basis van adechant/ha_vscode, commit
 664bde4d4bfaf2d661873a5a1a7c6d80a2aadb25. Geen officiële upstream-release.
 
 ## Validatie
 
-10 gerichte regressietests geslaagd met de echte Home Assistant 2026.8.3
+13 gerichte regressietests geslaagd met de echte Home Assistant 2026.8.3
 Python-klassen en Python 3.14.6. Tests gebruiken lokale testprocessen en
 nagebootste download/authenticatie-antwoorden. Ook Python-syntax en Ruff gecontroleerd.
 Home Assistant 2026.9.0 was op 2 september 2026 niet beschikbaar via de gebruikte

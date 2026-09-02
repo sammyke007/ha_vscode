@@ -6,7 +6,8 @@
       "authentication": "Could not authenticate with GitHub, try again later.",
       "download": "Could not download or start the VS Code CLI. Check connectivity, architecture and directory permissions.",
       "zip": "Unzipping and untarring the downloaded file failed. Please check the system logs.",
-      "unknown": "An unknown error occurred. Please check the system logs."
+      "unknown": "An unknown error occurred. Please check the system logs.",
+      "tunnel_exited": "The VS Code process stopped before reporting a tunnel URL. Check the Home Assistant logs for its exit code."
     },
     "error": {
       "single_instance_allowed": "Only a single configuration of HA VSCode Tunnel is allowed.",
@@ -14,7 +15,8 @@
       "authentication": "Could not authenticate with GitHub, try again later.",
       "download": "Could not download or start the VS Code CLI. Check connectivity, architecture and directory permissions.",
       "zip": "Unzipping and untarring the downloaded file failed. Please check the system logs.",
-      "unknown": "An unknown error occurred. Please check the system logs."
+      "unknown": "An unknown error occurred. Please check the system logs.",
+      "authentication_pending": "The tunnel is not ready yet. Complete authorization on GitHub, wait 15 seconds, then submit again. The login session is still active. If this persists, cancel and check the Home Assistant logs."
     },
     "step": {
       "user": {
@@ -46,6 +48,9 @@
         "title": "Home Assistant VSCode Tunnel",
         "description": "Tunnel needs re-authentication.\n1. Open {url} \n2. Paste the following token to authorize your VSCode tunnel: \n```\n{token}\n```\n"
       }
+    },
+    "error": {
+      "authentication_pending": "The tunnel is not ready yet. Complete authorization on GitHub, wait 15 seconds, then submit again. The login session is still active. If this persists, cancel and check the Home Assistant logs."
     }
   }
 }

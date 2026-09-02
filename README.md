@@ -1,12 +1,12 @@
 # Home Assistant VSCode Tunnel
 
-Herstelversie 0.1.51 van [adechant/ha_vscode](https://github.com/adechant/ha_vscode).
+Herstelversie 0.1.52 van [adechant/ha_vscode](https://github.com/adechant/ha_vscode).
 Deze integratie start een VS Code Remote Tunnel vanuit Home Assistant, met een
 switch om de verbinding aan en uit te zetten.
 
 ## Status
 
-Tien regressietests slagen met Home Assistant 2026.8.3 en Python 3.14.6.
+Dertien regressietests slagen met Home Assistant 2026.8.3 en Python 3.14.6.
 De tests gebruiken echte Home Assistant-klassen, lokale testprocessen en
 nagebootste download- en authenticatieantwoorden. Een echte verbinding op HAOS
 en Home Assistant 2026.9 zijn nog niet gevalideerd.
@@ -48,3 +48,11 @@ Bestaande CLI-bestanden worden behouden en niet automatisch bijgewerkt.
 Gebaseerd op upstream-commit `664bde4d4bfaf2d661873a5a1a7c6d80a2aadb25`.
 Oorspronkelijke auteur: adechant. De oorspronkelijke MIT-licentie blijft behouden.
 Zie [LICENSE](LICENSE).
+
+## Fix in 0.1.52
+
+Een ontbrekende tunnel-URL na de wachttijd breekt een nog actief aanmeldproces
+niet meer af. Bevestig GitHub-autorisatie, wacht 15 seconden en dien het
+formulier opnieuw in. Dit geldt ook voor herauthenticatie. Een gestopt
+CLI-proces krijgt een afzonderlijke melding. Dit is geen bewijs dat alle
+mogelijke oorzaken van aanmeldproblemen zijn opgelost.

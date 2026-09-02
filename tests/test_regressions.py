@@ -172,3 +172,57 @@ def test_install_extracts_only_binary(tmp_path, monkeypatch):
     api.install()
     assert (tmp_path / "bin/code").read_bytes() == b"cli"
     assert not (tmp_path / "escape").exists()
+
+
+@pytest.mark.asyncio
+async def test_slow_activation_can_retry_without_stopping():
+    flow = HAVSCodeFlowHandler()
+    flow.hass = SimpleNamespace(
+        async_add_executor_job=AsyncMock(side_effect=lambda fn: fn())
+    )
+    flow.oauthToken = "ABCD-1234"
+    flow.device = SimpleNamespace(
+        activate=AsyncMock(side_effect=[None, "https://vscode.dev/tunnel/ready/"]),
+        isRunning=Mock(return_value=True),
+        stopTunnel=Mock(),
+    )
+    result = await flow.async_step_activate({})
+    assert result["type"] == "form"
+    assert result["errors"]["base"] == "authentication_pending"
+    flow.device.stopTunnel.assert_not_called()
+    assert flow._error is None
+    result = await flow.async_step_activate({})
+    assert result["type"] == "create_entry"
+    flow.device.stopTunnel.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_exited_activation_has_distinct_error():
+    flow = HAVSCodeFlowHandler()
+    flow.hass = SimpleNamespace(
+        async_add_executor_job=AsyncMock(side_effect=lambda fn: fn())
+    )
+    flow.device = SimpleNamespace(
+        activate=AsyncMock(return_value=None),
+        isRunning=Mock(return_value=False),
+        proc=SimpleNamespace(returncode=1),
+        stopTunnel=Mock(),
+    )
+    result = await flow.async_step_activate({})
+    assert result["reason"] == "tunnel_exited"
+    flow.device.stopTunnel.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_slow_reauth_preserves_session():
+    flow = HAVSCodeFlowHandler.async_get_options_flow(None)
+    flow.device = SimpleNamespace(
+        getDevURL=AsyncMock(return_value=None),
+        isRunning=Mock(return_value=True),
+        stopTunnel=Mock(),
+    )
+    flow.oauthToken = "ABCD-1234"
+    result = await flow.async_step_reauth({})
+    assert result["step_id"] == "reauth"
+    assert result["errors"]["base"] == "authentication_pending"
+    flow.device.stopTunnel.assert_not_called()
