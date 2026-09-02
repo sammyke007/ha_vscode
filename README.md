@@ -1,6 +1,6 @@
 # Home Assistant VSCode Tunnel
 
-Herstelversie 0.1.52 van [adechant/ha_vscode](https://github.com/adechant/ha_vscode).
+Herstelversie 0.1.53 van [adechant/ha_vscode](https://github.com/adechant/ha_vscode).
 Deze integratie start een VS Code Remote Tunnel vanuit Home Assistant, met een
 switch om de verbinding aan en uit te zetten.
 
@@ -56,3 +56,12 @@ niet meer af. Bevestig GitHub-autorisatie, wacht 15 seconden en dien het
 formulier opnieuw in. Dit geldt ook voor herauthenticatie. Een gestopt
 CLI-proces krijgt een afzonderlijke melding. Dit is geen bewijs dat alle
 mogelijke oorzaken van aanmeldproblemen zijn opgelost.
+
+## Verduidelijking in 0.1.53
+
+Het timeoutveld heet nu **Tunnel URL wait time for checks and reauthorization
+(seconds)**. Het bepaalt hoelang controle en herauthenticatie op de tunnel-URL
+wachten. De eerste installatie heeft een aparte wachttijd van vijf seconden.
+Het veld bepaalt niet hoelang de tunnel aanblijft. De uitleg staat ook boven
+het veld. Een gewijzigde waarde opslaan herlaadt de integratie; schakel de
+tunnel daarna opnieuw in. De werking en bestaande ingestelde waarde blijven gelijk.

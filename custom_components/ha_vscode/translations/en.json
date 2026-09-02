@@ -38,10 +38,10 @@
     "step": {
       "user": {
         "title": "Home Assistant VSCode Tunnel",
-        "description": "Switch enabled. Turn me on and access your VSCode instance at {url}",
+        "description": "Use the switch to start the tunnel, then open {url}.\n\nThis setting controls how long checks and reauthorization wait for the tunnel URL. Initial setup uses a separate 5-second wait. This does not set how long the tunnel stays on. Saving a changed value reloads the integration; turn the switch on again afterward.",
         "data": {
           "needs_reauth": "Tunnel needs re-authentication.\n1. Open {url} \n2. Paste the following token to authorize your VSCode tunnel: \n```\n{token}\n```\n",
-          "timeout": "Timeout to wait for tunnel start."
+          "timeout": "Tunnel URL wait time for checks and reauthorization (seconds)"
         }
       },
       "reauth": {

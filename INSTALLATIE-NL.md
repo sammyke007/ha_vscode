@@ -1,4 +1,4 @@
-# HA VSCode Tunnel – herstelversie 0.1.52
+# HA VSCode Tunnel – herstelversie 0.1.53
 
 Dit is een aangepaste testversie op basis van adechant/ha_vscode, commit
 664bde4d4bfaf2d661873a5a1a7c6d80a2aadb25. Geen officiële upstream-release.
