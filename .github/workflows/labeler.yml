@@ -1,10 +1,8 @@
 name: Manage labels
 
+# Optional maintenance: run manually only after configuring the required permissions.
 on:
-  push:
-    branches:
-      - main
-      - master
+  workflow_dispatch:
 
 jobs:
   labeler:

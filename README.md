@@ -85,3 +85,13 @@ tegen de live Microsoft/GitHub-diensten. Er is geen claim dat de code foutloos i
 Gebaseerd op upstream-commit `664bde4d4bfaf2d661873a5a1a7c6d80a2aadb25`.
 Oorspronkelijke auteur: adechant. De oorspronkelijke [MIT-licentie](LICENSE)
 blijft behouden.
+
+## Controles voor deze custom repository
+
+Deze fork wordt als aangepaste HACS-repository gebruikt. De HACS-workflow slaat
+alleen de optionele controles op Issues en topics over. De overige HACS-controles,
+Home Assistant-validatie en regressietests blijven actief.
+
+De overgenomen workflows voor labels en releaseconcepten draaien uitsluitend
+handmatig. Ze vereisen afzonderlijke schrijfrechten als je ze later wilt gebruiken;
+deze wijziging verleent geen extra rechten. Releases kun je via GitHub publiceren.

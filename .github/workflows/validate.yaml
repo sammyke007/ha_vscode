@@ -1,4 +1,4 @@
-name: Validate
+name: Validate custom HACS repository
 
 on:
   push:
@@ -16,3 +16,5 @@ jobs:
         uses: "hacs/action@main"
         with:
           category: "integration"
+          # Optional catalog metadata is not required for this custom repository.
+          ignore: "issues topics"

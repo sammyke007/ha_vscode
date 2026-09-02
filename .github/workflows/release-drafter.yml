@@ -1,9 +1,8 @@
 name: Draft a release note
+# Optional maintenance: run manually only after configuring the required permissions.
 on:
-  push:
-    branches:
-      - main
-      - master
+  workflow_dispatch:
+
 jobs:
   draft_release:
     name: Release Drafter
