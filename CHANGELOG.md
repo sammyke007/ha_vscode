@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1
+
+- Use English throughout the repository documentation and integration interface.
+- Replace the Dutch installation guide with INSTALLATION.md.
+- Refresh the HACS information page and contribution instructions.
+- Add English GitHub release descriptions in RELEASE_NOTES.md.
+- Remove the Dutch translation so Home Assistant uses the English fallback.
+- No changes to tunnel behavior or configuration.
+
 ## 0.2.0
 
 - One authentication state handler observes both devicecodes and tunnel URLs,
