@@ -1,56 +1,67 @@
 {
   "config": {
     "abort": {
-      "single_instance_allowed": "Only a single configuration of HA VSCode Tunnel is allowed.",
-      "min_ha_version": "You need at least version {version} of Home Assistant to setup HA VSCode Tunnel.",
-      "authentication": "Could not authenticate with GitHub, try again later.",
-      "download": "Could not download or start the VS Code CLI. Check connectivity, architecture and directory permissions.",
-      "zip": "Unzipping and untarring the downloaded file failed. Please check the system logs.",
-      "unknown": "An unknown error occurred. Please check the system logs.",
-      "tunnel_exited": "The VS Code process stopped before reporting a tunnel URL. Check the Home Assistant logs for its exit code."
+      "single_instance_allowed": "Only one VS Code Tunnel integration can be configured.",
+      "already_configured": "The integration is already configured.",
+      "already_in_progress": "Setup is already in progress.",
+      "tunnel_busy": "Turn off the tunnel switch and close other authentication checks, then try again.",
+      "cannot_start": "Could not install or start the VS Code CLI. Check internet access and directory permissions.",
+      "tunnel_exited": "The tunnel process stopped before reporting a URL. Check the exit code and error category in the Home Assistant logs.",
+      "session_expired": "The authentication session closed after ten minutes or Home Assistant is stopping. Start a new check.",
+      "not_loaded": "The integration is not loaded. Reload it and try again."
     },
     "error": {
-      "single_instance_allowed": "Only a single configuration of HA VSCode Tunnel is allowed.",
-      "min_ha_version": "You need at least version {version} of Home Assistant to setup HA VSCode Tunnel.",
-      "authentication": "Could not authenticate with GitHub, try again later.",
-      "download": "Could not download or start the VS Code CLI. Check connectivity, architecture and directory permissions.",
-      "zip": "Unzipping and untarring the downloaded file failed. Please check the system logs.",
-      "unknown": "An unknown error occurred. Please check the system logs.",
-      "authentication_pending": "The tunnel is not ready yet. Complete authorization on GitHub, wait 15 seconds, then submit again. The login session is still active. If this persists, cancel and check the Home Assistant logs."
+      "invalid_timeout": "Enter a number between 1 and 120."
     },
     "step": {
       "user": {
         "title": "Home Assistant VSCode Tunnel",
-        "description": "If you need help with the configuration have a look here: https://github.com/sammyke007/ha_vscode.\n1. Open {url} \n2. Paste the token listed below to authorize your VSCode tunnel.\n3. Click submit to activate the tunnel. \n```\n{token}\n```\n"
+        "description": "This integration starts a Microsoft VS Code Remote Tunnel using GitHub authorization. Starting downloads the Microsoft CLI if needed and accepts its server license terms. The wait applies to each check, including this setup. After setup the tunnel switch is off.",
+        "data": {
+          "timeout": "Wait per authentication check (seconds)"
+        }
+      },
+      "wait": {
+        "title": "Starting tunnel",
+        "description": "No authentication code or tunnel URL has arrived yet. The process remains active. Submit to check again. This session stops automatically after ten minutes."
+      },
+      "authorize": {
+        "title": "GitHub authorization",
+        "description": "Open {url} and enter this code:\n\n`{token}`\n\nWait for GitHub to confirm authorization, then submit. If this screen reappears, wait briefly and retry. Do not share the code."
       }
-    },
-    "progress": {
-      "wait_for_oauth": "Generating OAuth token. Please wait while the tunnel is started.",
-      "wait_for_activation": "1. Open {url} \n2. Paste the following token to authorize your VSCode tunnel: \n```\n{token}\n```\n"
     }
   },
   "options": {
     "abort": {
-      "not_setup": "HA VSCode Tunnel is not setup.",
-      "no_reauth_needed": "HA VSCode Tunnel is up and running!",
-      "reauth_error": "Tunnel re-authorization failed. Please try again later!"
-    },
-    "step": {
-      "user": {
-        "title": "Home Assistant VSCode Tunnel",
-        "description": "Use the switch to start the tunnel, then open {url}.\n\nThis setting controls how long checks and reauthorization wait for the tunnel URL. Initial setup uses a separate 5-second wait. This does not set how long the tunnel stays on. Saving a changed value reloads the integration; turn the switch on again afterward.",
-        "data": {
-          "needs_reauth": "Tunnel needs re-authentication.\n1. Open {url} \n2. Paste the following token to authorize your VSCode tunnel: \n```\n{token}\n```\n",
-          "timeout": "Tunnel URL wait time for checks and reauthorization (seconds)"
-        }
-      },
-      "reauth": {
-        "title": "Home Assistant VSCode Tunnel",
-        "description": "Tunnel needs re-authentication.\n1. Open {url} \n2. Paste the following token to authorize your VSCode tunnel: \n```\n{token}\n```\n"
-      }
+      "single_instance_allowed": "Only one VS Code Tunnel integration can be configured.",
+      "already_configured": "The integration is already configured.",
+      "already_in_progress": "Setup is already in progress.",
+      "tunnel_busy": "Turn off the tunnel switch and close other authentication checks, then try again.",
+      "cannot_start": "Could not install or start the VS Code CLI. Check internet access and directory permissions.",
+      "tunnel_exited": "The tunnel process stopped before reporting a URL. Check the exit code and error category in the Home Assistant logs.",
+      "session_expired": "The authentication session closed after ten minutes or Home Assistant is stopping. Start a new check.",
+      "not_loaded": "The integration is not loaded. Reload it and try again."
     },
     "error": {
-      "authentication_pending": "The tunnel is not ready yet. Complete authorization on GitHub, wait 15 seconds, then submit again. The login session is still active. If this persists, cancel and check the Home Assistant logs."
+      "invalid_timeout": "Enter a number between 1 and 120."
+    },
+    "step": {
+      "init": {
+        "title": "Tunnel settings",
+        "description": "This screen does not check the connection. The wait applies to an explicit authentication check and does not limit how long the tunnel stays on. Turn the switch off before checking authentication. Changing only the wait does not interrupt a running tunnel.",
+        "data": {
+          "timeout": "Wait per authentication check (seconds)",
+          "check_auth": "Check authentication / sign in again"
+        }
+      },
+      "wait": {
+        "title": "Starting tunnel",
+        "description": "No authentication code or tunnel URL has arrived yet. The process remains active. Submit to check again. This session stops automatically after ten minutes."
+      },
+      "authorize": {
+        "title": "GitHub authorization",
+        "description": "Open {url} and enter this code:\n\n`{token}`\n\nWait for GitHub to confirm authorization, then submit. If this screen reappears, wait briefly and retry. Do not share the code."
+      }
     }
   }
 }

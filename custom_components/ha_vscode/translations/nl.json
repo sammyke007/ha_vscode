@@ -1,0 +1,67 @@
+{
+  "config": {
+    "abort": {
+      "single_instance_allowed": "Er kan maar één VS Code Tunnel-integratie worden ingesteld.",
+      "already_configured": "De integratie is al ingesteld.",
+      "already_in_progress": "Er loopt al een installatie.",
+      "tunnel_busy": "Zet de tunnelswitch uit en sluit andere aanmeldcontroles. Probeer daarna opnieuw.",
+      "cannot_start": "De VS Code CLI kon niet worden geïnstalleerd of gestart. Controleer internettoegang en schrijfrechten.",
+      "tunnel_exited": "Het tunnelproces is gestopt voordat het een URL doorgaf. Bekijk de exitcode en foutcategorie in de Home Assistant-logboeken.",
+      "session_expired": "De aanmeldsessie is na tien minuten gesloten, of Home Assistant wordt afgesloten. Start een nieuwe controle.",
+      "not_loaded": "De integratie is niet geladen. Herlaad de integratie en probeer opnieuw."
+    },
+    "error": {
+      "invalid_timeout": "Voer een getal tussen 1 en 120 in."
+    },
+    "step": {
+      "user": {
+        "title": "Home Assistant VSCode Tunnel",
+        "description": "Deze integratie start een Microsoft VS Code Remote Tunnel met GitHub-autorisatie. Bij starten wordt zo nodig de Microsoft CLI gedownload en worden de serverlicentievoorwaarden geaccepteerd. De wachttijd geldt per controle, ook tijdens deze installatie. Na instellen staat de tunnelswitch uit.",
+        "data": {
+          "timeout": "Wachttijd per aanmeldcontrole (seconden)"
+        }
+      },
+      "wait": {
+        "title": "Tunnel starten",
+        "description": "Er is nog geen aanmeldcode of tunnel-URL ontvangen. Het proces blijft actief. Klik op Verzenden om opnieuw te controleren. Na tien minuten wordt deze sessie automatisch gestopt."
+      },
+      "authorize": {
+        "title": "GitHub-autorisatie",
+        "description": "Open {url} en voer deze code in:\n\n`{token}`\n\nWacht op de bevestiging van GitHub en klik daarna op Verzenden. Verschijnt dit scherm opnieuw, wacht dan even en probeer opnieuw. Deel de code niet."
+      }
+    }
+  },
+  "options": {
+    "abort": {
+      "single_instance_allowed": "Er kan maar één VS Code Tunnel-integratie worden ingesteld.",
+      "already_configured": "De integratie is al ingesteld.",
+      "already_in_progress": "Er loopt al een installatie.",
+      "tunnel_busy": "Zet de tunnelswitch uit en sluit andere aanmeldcontroles. Probeer daarna opnieuw.",
+      "cannot_start": "De VS Code CLI kon niet worden geïnstalleerd of gestart. Controleer internettoegang en schrijfrechten.",
+      "tunnel_exited": "Het tunnelproces is gestopt voordat het een URL doorgaf. Bekijk de exitcode en foutcategorie in de Home Assistant-logboeken.",
+      "session_expired": "De aanmeldsessie is na tien minuten gesloten, of Home Assistant wordt afgesloten. Start een nieuwe controle.",
+      "not_loaded": "De integratie is niet geladen. Herlaad de integratie en probeer opnieuw."
+    },
+    "error": {
+      "invalid_timeout": "Voer een getal tussen 1 en 120 in."
+    },
+    "step": {
+      "init": {
+        "title": "Tunnelinstellingen",
+        "description": "Dit scherm controleert de verbinding niet. De wachttijd geldt voor een expliciete aanmeldcontrole en bepaalt niet hoelang de tunnel aanblijft. Zet de switch eerst uit als je de aanmelding wilt controleren. Alleen de wachttijd wijzigen onderbreekt een actieve tunnel niet.",
+        "data": {
+          "timeout": "Wachttijd per aanmeldcontrole (seconden)",
+          "check_auth": "Aanmelding controleren / opnieuw aanmelden"
+        }
+      },
+      "wait": {
+        "title": "Tunnel starten",
+        "description": "Er is nog geen aanmeldcode of tunnel-URL ontvangen. Het proces blijft actief. Klik op Verzenden om opnieuw te controleren. Na tien minuten wordt deze sessie automatisch gestopt."
+      },
+      "authorize": {
+        "title": "GitHub-autorisatie",
+        "description": "Open {url} en voer deze code in:\n\n`{token}`\n\nWacht op de bevestiging van GitHub en klik daarna op Verzenden. Verschijnt dit scherm opnieuw, wacht dan even en probeer opnieuw. Deel de code niet."
+      }
+    }
+  }
+}

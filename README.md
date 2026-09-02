@@ -1,67 +1,87 @@
 # Home Assistant VSCode Tunnel
 
-Herstelversie 0.1.53 van [adechant/ha_vscode](https://github.com/adechant/ha_vscode).
-Deze integratie start een VS Code Remote Tunnel vanuit Home Assistant, met een
-switch om de verbinding aan en uit te zetten.
+Versie **0.2.0** van de fork van [adechant/ha_vscode](https://github.com/adechant/ha_vscode).
+Start een Microsoft VS Code Remote Tunnel vanuit Home Assistant en bedien het
+proces met een switch. Aanmelden gebeurt via de GitHub-devicecode.
 
-## Status
+## Installatie
 
-Dertien regressietests slagen met Home Assistant 2026.8.3 en Python 3.14.6.
-De tests gebruiken echte Home Assistant-klassen, lokale testprocessen en
-nagebootste download- en authenticatieantwoorden. Een echte verbinding op HAOS
-en Home Assistant 2026.9 zijn nog niet gevalideerd.
+1. Maak een Home Assistant-back-up.
+2. Voeg `https://github.com/sammyke007/ha_vscode` in HACS toe als aangepaste
+   repository, categorie **Integratie**.
+3. Download en herstart Home Assistant.
+4. Voeg Home Assistant VSCode Tunnel toe via Instellingen → Apparaten & diensten.
+5. Kies de wachttijd per controle. De CLI wordt zo nodig gedownload.
+6. Autoriseer de getoonde code op GitHub. Klik vervolgens op Verzenden.
+   Een laat antwoord sluit de sessie niet: controleer opnieuw als daarom wordt gevraagd.
+7. Na de succesvolle controle staat de switch uit. Zet hem aan en open
+   [vscode.dev](https://vscode.dev) om de tunnel te selecteren.
 
-## Installatie via HACS
+Gebruik één HACS-repository om de componentmap te beheren. Als je overstapt van
+upstream: bewaar je bestaande configuratie en CLI-bestanden. Verwijder niet
+onnodig de integratie-entry. Zie [INSTALLATIE-NL.md](INSTALLATIE-NL.md).
 
-Gebruik de repository `sammyke007/ha_vscode`:
+## Instellingen en aanmelden
 
-1. Open HACS → menu → Aangepaste repositories.
-2. Voeg `https://github.com/sammyke007/ha_vscode` toe, categorie **Integratie**.
-3. Installeer Home Assistant VSCode Tunnel en herstart Home Assistant.
-4. Voeg de integratie toe via Instellingen → Apparaten & diensten.
-5. Volg de GitHub-device-login en zet daarna de tunnelswitch aan.
-6. Open https://vscode.dev en selecteer de tunnel.
+Instellingen openen start **geen** proces en controleert de verbinding niet.
+Alleen de wachttijd opslaan herlaadt de integratie niet en onderbreekt de tunnel niet.
 
-Gebruik niet tegelijk de oorspronkelijke repository en deze fork in HACS voor
-het beheren van dezelfde componentmap. Maak bij overstappen eerst een back-up.
+Voor een expliciete controle: zet de switch uit, open Configureren, vink
+**Aanmelding controleren / opnieuw aanmelden** aan en verstuur het formulier.
+Deze controle reserveert dezelfde CLI als de switch. De switch kan tijdens de
+controle geen tweede proces starten. Na succes of annuleren stopt de controle.
+Een verlaten aanmeldsessie wordt na tien minuten opgeruimd; ook HA-afsluiting
+ruimt haar op. Handmatig herladen van de integratie tijdens een controle kan die
+controle laten mislukken; sluit het formulier en probeer opnieuw.
 
-## Bestaande installatie en handmatige installatie
+De wachttijd is 1–120 seconden **per controle**. Bij nieuwe installatie is de
+standaard 7 seconden. Bestaande waarden worden behouden. Er is geen afzonderlijke
+hardgecodeerde eerste wachtperiode meer. De wachttijd is geen maximale looptijd
+van de tunnel. Dit is ook in de Nederlandse en Engelse interface uitgelegd.
 
-Zie [INSTALLATIE-NL.md](INSTALLATIE-NL.md) voor het behouden van de bestaande
-`bin`-map, installatie, controle, terugzetten en reproduceerbare tests.
+## Status en foutdiagnose
 
-## Wijzigingen
+De switch is aan zolang het CLI-proces draait. Dat bewijst niet dat een externe
+verbinding werkt. Bekijk daarom ook de attributen:
 
-- Home Assistant beheert de OptionsFlow-config-entry.
-- Opties vallen terug op bestaande entry-data en worden door de switch gebruikt.
-- Downloads en procesbeheer draaien buiten de eventloop.
-- De proceslezer stopt op EOF; stoppen ruimt de eigen procesgroep op.
-- De switch rapporteert de processtatus en stopt bij unload en HA-afsluiting.
-- CLI-download met TLS-controle en beperkte extractie.
-- Geen login-codes of geforceerde debuglogging in de logs.
+| Attribuut | Betekenis |
+| --- | --- |
+| `tunnel_status` | `starting`, `auth_required`, `ready` of `stopped` |
+| `tunnel_url` | URL uit het huidige proces, alleen bij `ready` |
+| `last_error_category` | Herkende foutcategorie, indien beschikbaar |
+| `configuration_in_progress` | Een aanmeldcontrole heeft het proces gereserveerd |
 
-Een wijziging van opties herlaadt de integratie; zet de switch daarna weer aan.
-Bestaande CLI-bestanden worden behouden en niet automatisch bijgewerkt.
+`ready` betekent dat de CLI een URL heeft gemeld, niet dat er permanent een
+netwerk-healthcheck loopt. De attributen volgen de normale HA-pollingcyclus.
 
-## Herkomst en licentie
+Een onverwachte procesexit wordt met exitcode gelogd wanneer de outputlezer de
+exit waarneemt. Bekende meldingen worden ingedeeld als authenticatie-, netwerk-,
+TLS- of platformfout. Onbekende fouten kunnen `unknown` blijven. Ruwe CLI-output,
+aanmeldcodes en tokens worden niet gelogd. Nieuwe devicecodes worden niet in
+config-entries opgeslagen; bestaande oude entry-data blijven compatibel.
+
+## Proces- en downloadbeheer
+
+- Downloads, bestandstoegang en starten/stoppen draaien buiten de HA-eventloop.
+- De lezer eindigt op EOF; stoppen heeft begrensde wachttijden en beëindigt de
+  eigen Linux-procesgroep, inclusief normale onderliggende processen.
+- Een ontbrekende CLI wordt bij een volgende start opnieuw geïnstalleerd.
+- Downloads gebruiken TLS-controle. Alleen het verwachte uitvoerbare bestand
+  wordt uit het archief overgenomen, met limieten op de bestandsgrootte.
+- Een bestaande CLI wordt behouden; automatische CLI-updates zijn niet inbegrepen.
+- De CLI start met `--accept-server-license-terms`, zoals in upstream.
+- Na HA-herstart of herladen blijft de switch uit. Automatisch herstellen van de
+  vorige aan-stand is niet ingeschakeld.
+
+## Validatie en grenzen
+
+Zie [CHANGELOG.md](CHANGELOG.md) en de testworkflow. De tests gebruiken echte
+Home Assistant-flowklassen, nagebootste authenticatie/downloads en lokale
+subprocessen. Ze bewijzen geen volledige werking op jouw HAOS-installatie of
+tegen de live Microsoft/GitHub-diensten. Er is geen claim dat de code foutloos is.
+
+## Herkomst
 
 Gebaseerd op upstream-commit `664bde4d4bfaf2d661873a5a1a7c6d80a2aadb25`.
-Oorspronkelijke auteur: adechant. De oorspronkelijke MIT-licentie blijft behouden.
-Zie [LICENSE](LICENSE).
-
-## Fix in 0.1.52
-
-Een ontbrekende tunnel-URL na de wachttijd breekt een nog actief aanmeldproces
-niet meer af. Bevestig GitHub-autorisatie, wacht 15 seconden en dien het
-formulier opnieuw in. Dit geldt ook voor herauthenticatie. Een gestopt
-CLI-proces krijgt een afzonderlijke melding. Dit is geen bewijs dat alle
-mogelijke oorzaken van aanmeldproblemen zijn opgelost.
-
-## Verduidelijking in 0.1.53
-
-Het timeoutveld heet nu **Tunnel URL wait time for checks and reauthorization
-(seconds)**. Het bepaalt hoelang controle en herauthenticatie op de tunnel-URL
-wachten. De eerste installatie heeft een aparte wachttijd van vijf seconden.
-Het veld bepaalt niet hoelang de tunnel aanblijft. De uitleg staat ook boven
-het veld. Een gewijzigde waarde opslaan herlaadt de integratie; schakel de
-tunnel daarna opnieuw in. De werking en bestaande ingestelde waarde blijven gelijk.
+Oorspronkelijke auteur: adechant. De oorspronkelijke [MIT-licentie](LICENSE)
+blijft behouden.

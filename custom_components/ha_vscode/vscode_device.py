@@ -16,6 +16,11 @@ from urllib.request import urlopen
 from .const import PACKAGE_NAME
 from .exceptions import HAVSCodeDownloadException
 
+
+class TunnelBusyError(Exception):
+    """A configuration flow owns the CLI."""
+
+
 LOGGER = logging.getLogger(PACKAGE_NAME)
 architecture_map = {
     "x86_64": "alpine-x64",
@@ -35,6 +40,9 @@ class VSCodeDeviceAPI:
         self.oauthToken = None
         self.devURL = None
         self.lock = RLock()
+        self.probe_owner = None
+        self.last_error = None
+        self.stopping = False
 
     def install(self):
         """Download with TLS verification and extract only the CLI executable."""
@@ -80,18 +88,61 @@ class VSCodeDeviceAPI:
         """Iteration ends at EOF instead of spinning on empty readline results."""
         try:
             for line in proc.stdout:
-                if not self.checkForOauthToken(line):
-                    self.checkForDevURL(line)
+                # Never log raw CLI output: it can contain credentials or codes.
+                line = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", line)
+                if not self.checkForOauthToken(line) and not self.checkForDevURL(line):
+                    for category, pattern in (
+                        (
+                            "authentication",
+                            r"unauthorized|authentication failed|expired.*code|access denied",
+                        ),
+                        (
+                            "network",
+                            r"connection refused|timed out|dns|network unreachable",
+                        ),
+                        ("tls", r"certificate|tls handshake"),
+                        ("platform", r"unsupported|glibc|musl|exec format"),
+                    ):
+                        if re.search(pattern, line, re.IGNORECASE):
+                            self.last_error = category
+                            LOGGER.debug("Tunnel diagnostic category: %s", category)
+                            break
         except (OSError, ValueError):
             LOGGER.debug("Tunnel output closed")
+        finally:
+            code = proc.poll()
+            if code is not None and not self.stopping:
+                LOGGER.warning(
+                    "Tunnel process exited (code=%s, category=%s)",
+                    code,
+                    self.last_error or "unknown",
+                )
 
-    def startTunnel(self):
+    def claim_probe(self, owner):
+        """Reserve this device before any executor work can start."""
         with self.lock:
+            if self.probe_owner is not None or self.isRunning():
+                raise TunnelBusyError()
+            self.probe_owner = owner
+
+    def release_probe(self, owner):
+        with self.lock:
+            if self.probe_owner is owner:
+                self.stopTunnel()
+                self.probe_owner = None
+
+    def startTunnel(self, owner=None):
+        with self.lock:
+            if self.probe_owner is not owner:
+                raise TunnelBusyError()
             if self.isRunning():
                 return
             self.stopTunnel()
+            self.install()
             self.oauthToken = None
             self.devURL = None
+            self.last_error = None
+            self.stopping = False
             self.proc = subprocess.Popen(
                 [
                     self.exePath,
@@ -114,6 +165,7 @@ class VSCodeDeviceAPI:
             proc = self.proc
             if proc is None:
                 return
+            self.stopping = True
             try:
                 os.killpg(proc.pid, signal.SIGTERM)
             except ProcessLookupError:
@@ -143,6 +195,7 @@ class VSCodeDeviceAPI:
             r"https://github\.com/login/device.*?\b([A-Z0-9]{4}-[A-Z0-9]{4})\b", line
         )
         if match:
+            self.devURL = None
             self.oauthToken = match[1]
             return self.oauthToken
         return None
@@ -150,30 +203,34 @@ class VSCodeDeviceAPI:
     def checkForDevURL(self, line):
         match = re.search(r"https://vscode\.dev/tunnel/[A-Za-z0-9_-]+/?", line)
         if match:
+            self.oauthToken = None
             self.devURL = match[0]
             return self.devURL
         return None
 
-    async def _wait_for(self, attribute, timeout):
+    @property
+    def status(self):
+        """URL readiness is a CLI observation, not a network health check."""
+        if not self.isRunning():
+            return "stopped"
+        if self.devURL:
+            return "ready"
+        if self.oauthToken:
+            return "auth_required"
+        return "starting"
+
+    async def wait_status(self, timeout, after_auth=False):
+        """Observe token and URL together, including late-arriving codes."""
         deadline = time.monotonic() + timeout
+        previous_token = self.oauthToken
         while True:
-            value = getattr(self, attribute)
-            if value is not None:
-                return value
+            state = self.status
+            if state in ("ready", "stopped"):
+                return state
+            if state == "auth_required" and (
+                not after_auth or self.oauthToken != previous_token
+            ):
+                return state
             if time.monotonic() >= deadline:
-                return None
+                return state
             await asyncio.sleep(0.1)
-
-    async def getOAuthToken(self, timeout=3.0):
-        return await self._wait_for("oauthToken", timeout)
-
-    async def getDevURL(self, timeout=5.0):
-        return await self._wait_for("devURL", timeout)
-
-    async def activate(self, timeout=5.0):
-        return await self.getDevURL(timeout)
-
-    async def register(self, timeout=5.0):
-        await asyncio.to_thread(self.install)
-        await asyncio.to_thread(self.startTunnel)
-        return await self.getOAuthToken(timeout)
