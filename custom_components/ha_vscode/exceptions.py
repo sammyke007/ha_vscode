@@ -17,8 +17,8 @@ class HAVSCodeAuthenticationException(HAVSCodeException):
 
 class HAVSCodeDownloadException(HAVSCodeException):
     exception_message = (
-        "Neither curl nor wget are available on your system. "
-        "Please install one or the other and try again."
+        "Could not download or install the VS Code CLI. "
+        "Check connectivity, architecture and directory permissions."
     )
 
     def __init__(self) -> None:

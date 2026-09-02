@@ -1,12 +1,14 @@
 {
   "domain": "ha_vscode",
   "name": "Home Assistant VSCode Tunnel",
-  "codeowners": ["@adechant"],
+  "codeowners": [
+    "@sammyke007"
+  ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/adechant/ha_vscode#readme",
+  "documentation": "https://github.com/sammyke007/ha_vscode#readme",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/adechant/ha_vscode/issues",
+  "issue_tracker": "https://github.com/sammyke007/ha_vscode/issues",
   "requirements": [],
-  "version": "0.1.50"
+  "version": "0.1.51"
 }

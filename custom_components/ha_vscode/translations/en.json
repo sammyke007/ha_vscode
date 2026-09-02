@@ -1,25 +1,25 @@
 {
   "config": {
     "abort": {
-      "single_instance_allowed": "Only a single configuration of HACS is allowed.",
-      "min_ha_version": "You need at least version {version} of Home Assistant to setup HACS.",
+      "single_instance_allowed": "Only a single configuration of HA VSCode Tunnel is allowed.",
+      "min_ha_version": "You need at least version {version} of Home Assistant to setup HA VSCode Tunnel.",
       "authentication": "Could not authenticate with GitHub, try again later.",
-      "download": "Neither curl nor wget are available on your system. Please install one or the other and try again.",
+      "download": "Could not download or start the VS Code CLI. Check connectivity, architecture and directory permissions.",
       "zip": "Unzipping and untarring the downloaded file failed. Please check the system logs.",
       "unknown": "An unknown error occurred. Please check the system logs."
     },
     "error": {
-      "single_instance_allowed": "Only a single configuration of HACS is allowed.",
-      "min_ha_version": "You need at least version {version} of Home Assistant to setup HACS.",
+      "single_instance_allowed": "Only a single configuration of HA VSCode Tunnel is allowed.",
+      "min_ha_version": "You need at least version {version} of Home Assistant to setup HA VSCode Tunnel.",
       "authentication": "Could not authenticate with GitHub, try again later.",
-      "download": "Neither curl nor wget are available on your system. Please install one or the other and try again.",
+      "download": "Could not download or start the VS Code CLI. Check connectivity, architecture and directory permissions.",
       "zip": "Unzipping and untarring the downloaded file failed. Please check the system logs.",
       "unknown": "An unknown error occurred. Please check the system logs."
     },
     "step": {
       "user": {
         "title": "Home Assistant VSCode Tunnel",
-        "description": "If you need help with the configuration have a look here: https://github.com/adechant/ha_vscode.\n1. Open {url} \n2. Paste the token listed below to authorize your VSCode tunnel.\n3. Click submit to activate the tunnel. \n```\n{token}\n```\n"
+        "description": "If you need help with the configuration have a look here: https://github.com/sammyke007/ha_vscode.\n1. Open {url} \n2. Paste the token listed below to authorize your VSCode tunnel.\n3. Click submit to activate the tunnel. \n```\n{token}\n```\n"
       }
     },
     "progress": {

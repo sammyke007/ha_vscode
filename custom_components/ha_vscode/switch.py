@@ -1,46 +1,49 @@
+"""Switch controlling the tunnel process."""
+
 import re
 
-from homeassistant.components.switch import SwitchDeviceClass
-from homeassistant.components.switch import SwitchEntity
-from homeassistant.const import UnitOfInformation
-from homeassistant.helpers.typing import ConfigType
-from homeassistant.helpers.typing import DiscoveryInfoType
+from homeassistant.components.switch import SwitchDeviceClass, SwitchEntity
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
+from .const import DOMAIN
 from .vscode_device import VSCodeDeviceAPI
 
 
-async def async_setup_entry(hass, config, async_add_devices):
-    # Run setup via Storage
-    dev_url = config.data["dev_url"]
-    path = config.data["path"]
-    async_add_devices([VSCodeEntity(path, dev_url)])
+async def async_setup_entry(hass, config, async_add_entities):
+    data = {**config.data, **config.options}
+    device = VSCodeDeviceAPI(data["path"])
+    hass.data.setdefault(DOMAIN, {})[config.entry_id] = device
+    async_add_entities([VSCodeEntity(device, data["dev_url"], config.entry_id)])
 
 
 class VSCodeEntity(SwitchEntity):
-    _attr_name = "Development URL"
-    _attr_native_unit_of_measurement = UnitOfInformation
     _attr_device_class = SwitchDeviceClass.SWITCH
 
-    def __init__(self, bin_dir, dev_url):
-        self.device = VSCodeDeviceAPI(bin_dir)
-        if dev_url.startswith("https://vscode.dev/tunnel/"):
-            # try and output just the tunnel name
-            slen = len("https://vscode.dev/tunnel/")
-            dev_url = dev_url[slen:]
-            match = re.search("^(.*)/", dev_url)
-            if match:
-                dev_url = match.group()[:-1]
-        self._attr_name = "VSCode.dev Tunnel: " + dev_url
+    def __init__(self, device, dev_url, entry_id):
+        self.device = device
+        name = re.sub(r"^https://vscode.dev/tunnel/", "", dev_url).split("/")[0]
+        self._attr_name = "VSCode.dev Tunnel: " + name
+        self._attr_unique_id = entry_id
 
-    def turn_on(self, **kwargs) -> None:
-        """Turn the entity on."""
-        self.device.startTunnel()
+    async def async_added_to_hass(self):
+        self.async_on_remove(
+            self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self._async_stop)
+        )
 
-    def turn_off(self, **kwargs):
-        """Turn the entity off."""
-        self.device.stopTunnel()
+    async def _async_stop(self, event=None):
+        await self.hass.async_add_executor_job(self.device.stopTunnel)
+
+    async def async_will_remove_from_hass(self):
+        await self._async_stop()
+
+    async def async_turn_on(self, **kwargs):
+        await self.hass.async_add_executor_job(self.device.startTunnel)
+        self.async_write_ha_state()
+
+    async def async_turn_off(self, **kwargs):
+        await self._async_stop()
+        self.async_write_ha_state()
 
     @property
     def is_on(self):
-        """If the switch is currently on or off."""
         return self.device.isRunning()

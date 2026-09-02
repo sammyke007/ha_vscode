@@ -2,13 +2,13 @@ NAME = "HA VSCode Tunnel"
 DOMAIN = "ha_vscode"
 PACKAGE_NAME = "custom_components.ha_vscode"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.1.50"
-MINIMUM_HA_VERSION = "2023.6.0"
+VERSION = "0.1.51"
+MINIMUM_HA_VERSION = "2024.11.0"
 ICON = "mdi:format-quote-close"
 CONF_ENABLED = "enabled"
 DEFAULT_NAME = DOMAIN
 HAVSCODE_SYSTEM_ID = "98450013-1865-4292-be24-abde34214bd6"
-ISSUE_URL = "https://https://github.com/adechant/ha_vscode/issues"
+ISSUE_URL = "https://github.com/sammyke007/ha_vscode/issues"
 SWITCH = "switch"
 PLATFORMS = [SWITCH]
 

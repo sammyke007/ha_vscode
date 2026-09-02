@@ -1,4 +1,5 @@
 """Adds config flow for VSCode HA Tunnel."""
+
 import logging
 import os.path
 
@@ -7,10 +8,6 @@ from awesomeversion import AwesomeVersion
 from homeassistant import config_entries
 from homeassistant.const import __version__ as HAVERSION
 from homeassistant.core import callback
-from homeassistant.helpers import aiohttp_client
-from homeassistant.helpers.event import async_call_later
-from homeassistant.helpers.storage import STORAGE_DIR
-from homeassistant.loader import async_get_integration
 
 from .const import *
 from .exceptions import *
@@ -23,7 +20,6 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for ha_vscode."""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
     def __init__(self):
         """Initialize."""
@@ -36,7 +32,7 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self.activate = False
         self.timeout = 5.0
 
-    async def async_step_user(self, user_input):
+    async def async_step_user(self, user_input=None):
         if self._async_current_entries():
             return self.async_abort(reason="single_instance_allowed")
         if self.hass.data.get(DOMAIN):
@@ -55,9 +51,11 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         if self.device is None:
             self.device = VSCodeDeviceAPI(self.path)
-            response = await self.device.register(
-                timeout=5
-            )  # can specify a timeout here. default is 3 seconds
+            try:
+                response = await self.device.register(timeout=self.timeout)
+            except (HAVSCodeException, OSError):
+                await self.hass.async_add_executor_job(self.device.stopTunnel)
+                return self.async_abort(reason="download")
             if response is None:
                 # check to see if we are somehow already authenticated
                 response = await self.device.getDevURL(timeout=self.timeout)
@@ -69,6 +67,7 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 self.oauthToken = response
 
         if self._error is not None:
+            await self.hass.async_add_executor_job(self.device.stopTunnel)
             return self.async_abort(reason=self.reason_for_error())
         if self.oauthToken is not None and self.activate:
             return await self.async_step_activate(user_input)
@@ -80,35 +79,31 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return await self._show_config_form(user_input)
 
     def reason_for_error(self):
-        # no switch in python until 3.10
-        try:
-            raise self._error
-        except HAVSCodeDownloadException:
-            return "download"
-        except HAVSCodeAuthenticationException:
-            return "authentication"
-        except HAVSCodeTarException:
-            return "tar"
-        except HAVSCodeZipException:
-            return "zip"
-        except Exception:
-            return "unknown"
-
+        for error_type, reason in (
+            (HAVSCodeDownloadException, "download"),
+            (HAVSCodeAuthenticationException, "authentication"),
+            (HAVSCodeTarException, "zip"),
+            (HAVSCodeZipException, "zip"),
+        ):
+            if isinstance(self._error, error_type):
+                return reason
         return "unknown"
 
     async def async_step_activate(self, _user_input):
         if not self.devURL and not self._error:
-            result = await self.device.activate(timeout=3)
+            result = await self.device.activate(timeout=self.timeout)
             if not result:
                 self._error = HAVSCodeAuthenticationException()
             else:
                 self.devURL = result
 
         if self._error:
+            await self.hass.async_add_executor_job(self.device.stopTunnel)
             reason = self.reason_for_error()
             self.log.debug("Reason activation error: " + reason)
             return self.async_abort(reason=reason)
 
+        await self.hass.async_add_executor_job(self.device.stopTunnel)
         # create entry and finish.
         return self.async_create_entry(
             title="HA VSCode Tunnel",
@@ -118,7 +113,6 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 "path": self.path,
                 "timeout": self.timeout,
             },
-            description="Created configuration for HA VSCode Tunnel.\nPlease access VSCode instance at {url}",
             description_placeholders={
                 "url": self.devURL,
             },
@@ -129,7 +123,7 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Clean up resources or tasks associated with the flow."""
         self.log.info("Cleaning up...")
         if self.device:
-            self.device.stopTunnel()
+            self.hass.async_add_executor_job(self.device.stopTunnel)
 
     async def _show_config_form(self, user_input):
         """Show the configuration form to edit location data."""
@@ -151,53 +145,63 @@ class HAVSCodeFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
         """Create the options flow."""
-        return HAVSCodeOptionsFlowHandler(config_entry)
+        return HAVSCodeOptionsFlowHandler()
 
 
 class HAVSCodeOptionsFlowHandler(config_entries.OptionsFlow):
     """Config flow options handler."""
 
-    def __init__(self, config_entry):
-        """Initialize HACS options flow."""
-        self.config_entry = config_entry
+    def __init__(self):
+        """Initialize options without accessing the framework-owned entry."""
         self.device = None
-        self.path = config_entry.options.get("path")
-        self.devURL = config_entry.options.get("dev_url")
-        self.oauthToken = config_entry.options.get("token")
-        self.timeout = config_entry.options.get("timeout")
+        self.path = None
+        self.devURL = None
+        self.oauthToken = None
+        self.timeout = None
         if self.timeout is None:
             self.timeout = 7.0
         self.log = LOGGER
         self._reauth = False
 
     async def async_step_init(self, _user_input=None):
+        entry_data = {**self.config_entry.data, **self.config_entry.options}
+        self.path = entry_data.get("path")
+        self.devURL = entry_data.get("dev_url")
+        self.oauthToken = entry_data.get("token")
+        self.timeout = entry_data.get("timeout", 7.0)
         if self.path is None:
             self.path = os.path.join(self.hass.config.path("custom_components"), DOMAIN)
             self.path = os.path.join(self.path, "bin")
             self.log.debug("bin directory located at: " + self.path)
 
+        active = self.hass.data.get(DOMAIN, {}).get(self.config_entry.entry_id)
+        if active is not None and active.isRunning():
+            self.devURL = active.devURL or self.devURL
+            return await self.async_step_user()
+
         if self.device is None:
             # start a tunnel and see if an oauth token is generated. if it is, then we need to reauth.
             self.device = VSCodeDeviceAPI(self.path)
-            self.device.startTunnel()
+            try:
+                await self.hass.async_add_executor_job(self.device.startTunnel)
+            except OSError:
+                return self.async_abort(reason="reauth_error")
             token = await self.device.getOAuthToken()
             if token is not None:
                 self.oauthToken = token
-                self.log.debug("Token received during option setup was: " + token)
                 self.log.debug("Reauthorization is needed.")
                 self._reauth = True
                 # we'll have to stop the tunnel later...
             else:
                 url = await self.device.getDevURL(self.timeout)
-                if self.devURL is None:
+                if url is not None:
                     self.devURL = url
-                self.device.stopTunnel()
+                await self.hass.async_add_executor_job(self.device.stopTunnel)
 
         return await self.async_step_user()
 
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
-        havsc = self.hass.data.get(DOMAIN)
         if user_input is not None:
             _timeout = float(user_input.get("timeout"))
             if self.timeout != _timeout:
@@ -209,10 +213,6 @@ class HAVSCodeOptionsFlowHandler(config_entries.OptionsFlow):
                         "path": self.path,
                         "timeout": _timeout,
                     },
-                    description="Created configuration for HA VSCode Tunnel.\nPlease access VSCode instance at {url}",
-                    description_placeholders={
-                        "url": self.devURL,
-                    },
                 )
 
             return self.async_abort(reason="no_reauth_needed")
@@ -220,9 +220,10 @@ class HAVSCodeOptionsFlowHandler(config_entries.OptionsFlow):
         if self.config_entry is None:
             return self.async_abort(reason="not_setup")
 
-        placeHolders = None
         schema = {
-            vol.Optional("timeout", default=self.timeout): float,
+            vol.Required("timeout", default=self.timeout): vol.All(
+                vol.Coerce(float), vol.Range(min=1, max=120)
+            ),
         }
         if self._reauth:
             return self.async_show_form(
@@ -245,7 +246,7 @@ class HAVSCodeOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_reauth(self, user_input=None):
         if user_input is not None:
             url = await self.device.getDevURL(self.timeout)
-            self.device.stopTunnel()
+            await self.hass.async_add_executor_job(self.device.stopTunnel)
             if url is None:
                 return self.async_abort(reason="reauth_error")
             self.devURL = url
@@ -257,10 +258,6 @@ class HAVSCodeOptionsFlowHandler(config_entries.OptionsFlow):
                     "path": self.path,
                     "timeout": self.timeout,
                 },
-                description="Created configuration for HA VSCode Tunnel.\nPlease access VSCode instance at {url}",
-                description_placeholders={
-                    "url": self.devURL,
-                },
             )
 
         return self.async_abort(reason="reauth_error")
@@ -269,5 +266,5 @@ class HAVSCodeOptionsFlowHandler(config_entries.OptionsFlow):
     def async_remove(self):
         """Clean up resources or tasks associated with the flow."""
         if self.device is not None:
-            self.device.stopTunnel()
+            self.hass.async_add_executor_job(self.device.stopTunnel)
             self.device = None
