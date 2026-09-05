@@ -44,6 +44,8 @@ def device(state="starting"):
         devURL=None,
         oauthToken=None,
         last_error=None,
+        last_exit_code=None,
+        retry_after_probe=False,
     )
 
 
@@ -226,6 +228,24 @@ def test_parser_clears_stale_state_and_strips_ansi(tmp_path):
     assert api.oauthToken is None
 
 
+def test_successful_probe_enables_exactly_one_retry(tmp_path):
+    api = VSCodeDeviceAPI(str(tmp_path))
+    api.probe_owner = object()
+    api.checkForDevURL("https://vscode.dev/tunnel/test/")
+    assert api.consume_retry_after_probe()
+    assert not api.consume_retry_after_probe()
+
+
+def test_authentication_status_callback_contains_no_device_code(tmp_path):
+    api = VSCodeDeviceAPI(str(tmp_path))
+    callback = Mock()
+    api.set_status_callback(callback)
+    api.checkForOauthToken(
+        "https://github.com/login/device and use code ABCD-1234"
+    )
+    callback.assert_called_once_with()
+
+
 def test_start_stop_and_probe_exclusion(tmp_path):
     executable = tmp_path / "code"
     executable.write_text("#!/bin/sh\nexec sleep 60\n")
@@ -314,6 +334,58 @@ def test_switch_separates_running_from_ready(tmp_path):
     api.oauthToken = "ABCD-1234"
     assert entity.extra_state_attributes["tunnel_status"] == "auth_required"
     assert "ABCD-1234" not in str(entity.extra_state_attributes)
+
+
+def test_switch_creates_and_clears_auth_notification(tmp_path, monkeypatch):
+    api = VSCodeDeviceAPI(str(tmp_path))
+    api.isRunning = lambda: True
+    entry = SimpleNamespace(
+        entry_id="test", data={"dev_url": "https://vscode.dev/tunnel/old/"}, options={}
+    )
+    entity = VSCodeEntity(api, entry)
+    entity.hass = object()
+    entity.async_write_ha_state = Mock()
+    create = Mock()
+    dismiss = Mock()
+    monkeypatch.setattr(
+        "custom_components.ha_vscode.switch.persistent_notification.async_create",
+        create,
+    )
+    monkeypatch.setattr(
+        "custom_components.ha_vscode.switch.persistent_notification.async_dismiss",
+        dismiss,
+    )
+
+    api.oauthToken = "ABCD-1234"
+    entity._handle_status_change()
+    create.assert_called_once()
+    assert "ABCD-1234" not in str(create.call_args)
+
+    api.oauthToken = None
+    api.devURL = "https://vscode.dev/tunnel/test/"
+    entity._handle_status_change()
+    dismiss.assert_called_once_with(entity.hass, "ha_vscode_auth_required")
+
+
+@pytest.mark.asyncio
+async def test_first_post_auth_exit_code_one_is_retried_once(monkeypatch):
+    api = SimpleNamespace(
+        status="stopped", last_exit_code=1, startTunnel=Mock()
+    )
+    entry = SimpleNamespace(
+        entry_id="test", data={"dev_url": "https://vscode.dev/tunnel/old/"}, options={}
+    )
+    entity = VSCodeEntity(api, entry)
+    loop = asyncio.get_running_loop()
+
+    async def executor(fn, *args):
+        return fn(*args)
+
+    entity.hass = SimpleNamespace(loop=loop, async_add_executor_job=executor)
+    entity.async_write_ha_state = Mock()
+    monkeypatch.setattr("custom_components.ha_vscode.switch.RETRY_DELAY", 0)
+    await entity._async_retry_after_authentication()
+    api.startTunnel.assert_called_once_with()
 
 
 @pytest.mark.asyncio

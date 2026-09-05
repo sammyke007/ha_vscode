@@ -42,7 +42,20 @@ class VSCodeDeviceAPI:
         self.lock = RLock()
         self.probe_owner = None
         self.last_error = None
+        self.last_exit_code = None
         self.stopping = False
+        self.retry_after_probe = False
+        self.status_callback = None
+
+    def set_status_callback(self, callback):
+        """Register a non-blocking callback for process status changes."""
+        with self.lock:
+            self.status_callback = callback
+
+    def _notify_status(self):
+        callback = self.status_callback
+        if callback is not None:
+            callback()
 
     def install(self):
         """Download with TLS verification and extract only the CLI executable."""
@@ -111,12 +124,14 @@ class VSCodeDeviceAPI:
             LOGGER.debug("Tunnel output closed")
         finally:
             code = proc.poll()
+            self.last_exit_code = code
             if code is not None and not self.stopping:
                 LOGGER.warning(
                     "Tunnel process exited (code=%s, category=%s)",
                     code,
                     self.last_error or "unknown",
                 )
+            self._notify_status()
 
     def claim_probe(self, owner):
         """Reserve this device before any executor work can start."""
@@ -142,6 +157,7 @@ class VSCodeDeviceAPI:
             self.oauthToken = None
             self.devURL = None
             self.last_error = None
+            self.last_exit_code = None
             self.stopping = False
             self.proc = subprocess.Popen(
                 [
@@ -159,6 +175,13 @@ class VSCodeDeviceAPI:
             )
             self.thread = Thread(target=self.reader, args=(self.proc,), daemon=True)
             self.thread.start()
+
+    def consume_retry_after_probe(self):
+        """Allow one guarded retry after an authentication probe succeeded."""
+        with self.lock:
+            retry = self.retry_after_probe
+            self.retry_after_probe = False
+            return retry
 
     def stopTunnel(self):
         with self.lock:
@@ -197,6 +220,7 @@ class VSCodeDeviceAPI:
         if match:
             self.devURL = None
             self.oauthToken = match[1]
+            self._notify_status()
             return self.oauthToken
         return None
 
@@ -205,6 +229,9 @@ class VSCodeDeviceAPI:
         if match:
             self.oauthToken = None
             self.devURL = match[0]
+            if self.probe_owner is not None:
+                self.retry_after_probe = True
+            self._notify_status()
             return self.devURL
         return None
 

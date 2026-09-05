@@ -52,6 +52,7 @@ remote connection works. Check the entity attributes as well:
 | `tunnel_status` | `starting`, `auth_required`, `ready`, or `stopped` |
 | `tunnel_url` | URL reported by the current process, available only when `ready` |
 | `last_error_category` | Recognized error category, if available |
+| `last_exit_code` | Exit code from the most recently stopped CLI process |
 | `configuration_in_progress` | An authentication check has reserved the process |
 
 `ready` means the CLI reported a URL; it is not a continuous network health check.
@@ -62,6 +63,16 @@ observes the exit. Recognized messages are categorized as authentication, networ
 TLS, or platform errors. Unrecognized errors may remain `unknown`. Raw CLI output,
 authorization codes, and tokens are not logged. New device codes are not stored in
 config entries; existing entry data remains compatible.
+
+When authentication is required, Home Assistant creates a persistent notification
+with the steps needed to sign in again. The notification has a fixed ID, so repeated
+checks update the same notification instead of creating duplicates. It is dismissed
+automatically after the tunnel becomes ready.
+
+After a successful authentication check, the preceding CLI process may briefly
+remain registered by the remote service. If the first normal start then exits with
+code 1, the integration waits three seconds and retries once. Other starts and exit
+codes are never retried automatically.
 
 ## Process and download management
 

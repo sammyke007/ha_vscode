@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.2
+
+- Create a persistent Home Assistant notification when GitHub authentication is
+  required, with instructions for starting the authentication flow.
+- Dismiss that notification automatically when the tunnel becomes ready.
+- Retry once, after a short delay, when the first tunnel start immediately after
+  successful authentication exits with code 1.
+- Expose the last CLI exit code as `last_exit_code` for troubleshooting.
+
 ## 0.2.1
 
 - Use English throughout the repository documentation and integration interface.

@@ -3,6 +3,17 @@
 These descriptions are provided for GitHub releases. An entry here does not mean
 that its release has been published.
 
+## v0.2.2 – Authentication notification and guarded retry
+
+- Notify the user in Home Assistant when GitHub authentication is required.
+- Include clear sign-in instructions without exposing the device code.
+- Dismiss the notification automatically when the tunnel is ready.
+- Retry once after three seconds if the first post-authentication start exits with
+  code 1.
+- Expose `last_exit_code` as an entity attribute for troubleshooting.
+
+Installation: update through HACS and restart Home Assistant.
+
 ## v0.2.1 – English documentation and interface
 
 - Translate the README and installation guide into English.
