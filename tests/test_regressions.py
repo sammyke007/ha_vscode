@@ -187,7 +187,7 @@ async def test_cancel_probe_releases_only_once(hass):
 @pytest.mark.asyncio
 async def test_initial_setup_uses_entered_timeout(hass, monkeypatch):
     api = device()
-    monkeypatch.setattr(flows, "VSCodeDeviceAPI", lambda _: api)
+    monkeypatch.setattr(flows, "VSCodeDeviceAPI", lambda *_: api)
     flow = HAVSCodeFlowHandler()
     flow.hass = hass
     flow._async_current_entries = list
@@ -271,6 +271,32 @@ def test_start_stop_and_probe_exclusion(tmp_path):
             api.startTunnel(owner)
     finally:
         api.stopTunnel()
+
+
+def test_tunnel_uses_persistent_runtime_directories(tmp_path):
+    runtime = tmp_path / ".ha_vscode"
+    api = VSCodeDeviceAPI(
+        str(tmp_path / "component-bin"), runtime, "homeassistant"
+    )
+    api.prepare_runtime()
+    command = api.tunnel_command()
+
+    assert command == [
+        str(tmp_path / "component-bin" / "code"),
+        "--cli-data-dir",
+        str(runtime / "cli"),
+        "tunnel",
+        "--server-data-dir",
+        str(runtime / "server"),
+        "--extensions-dir",
+        str(runtime / "extensions"),
+        "--name",
+        "homeassistant",
+        "--accept-server-license-terms",
+    ]
+    for directory in (runtime, runtime / "cli", runtime / "server", runtime / "extensions"):
+        assert directory.is_dir()
+        assert directory.stat().st_mode & 0o777 == 0o700
 
 
 def test_dead_process_not_ready(tmp_path):

@@ -28,7 +28,12 @@ RETRY_WINDOW = 10
 
 async def async_setup_entry(hass, config, async_add_entities):
     data = {**config.data, **config.options}
-    device = VSCodeDeviceAPI(data["path"])
+    tunnel_name = re.sub(
+        r"^https://vscode.dev/tunnel/", "", data["dev_url"]
+    ).split("/")[0]
+    device = VSCodeDeviceAPI(
+        data["path"], hass.config.path(".ha_vscode"), tunnel_name
+    )
     hass.data.setdefault(DOMAIN, {})[config.entry_id] = device
     async_add_entities([VSCodeEntity(device, config)])
 

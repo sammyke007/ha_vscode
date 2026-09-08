@@ -171,7 +171,11 @@ class HAVSCodeFlowHandler(
                 errors={"base": "invalid_timeout"},
             )
         self.path = self.hass.config.path("custom_components", DOMAIN, "bin")
-        self.device = VSCodeDeviceAPI(self.path)
+        self.device = VSCodeDeviceAPI(
+            self.path,
+            self.hass.config.path(".ha_vscode"),
+            "homeassistant",
+        )
         return await self._begin()
 
     def _finish(self, url):

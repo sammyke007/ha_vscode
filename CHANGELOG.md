@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.3
+
+- Store VS Code CLI metadata, server data, and remote extensions in dedicated
+  persistent directories below `/config/.ha_vscode`.
+- Reuse the configured tunnel name instead of requesting a random name for each
+  process start.
+- Protect the runtime directories with owner-only permissions.
+- Existing installations may require one final GitHub authentication after
+  upgrading because credentials move to the new persistent CLI data directory.
+
 ## 0.2.2
 
 - Create a persistent Home Assistant notification when GitHub authentication is

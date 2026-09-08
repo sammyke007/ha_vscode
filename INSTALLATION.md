@@ -17,6 +17,12 @@ There is no new config-entry version or required data migration in 0.2.x.
 New options do not contain a temporary device code. Changing only the wait time
 does not interrupt the tunnel.
 
+Version 0.2.3 moves CLI authentication, server data, and remote extensions to
+`/config/.ha_vscode`. Authenticate once after upgrading when prompted, then
+reinstall the required remote extensions under **Homeassistant – Installed**.
+They will persist from that point onward. Do not copy unknown credentials from
+the previous container-local directory.
+
 ## Manual installation
 
 Copy the files from `custom_components/ha_vscode` to
@@ -25,6 +31,9 @@ stored CLI credentials. For the English-only interface in 0.2.1, remove the old
 `translations/nl.json` file if your copy operation leaves obsolete files behind.
 Restart Home Assistant. A missing CLI is downloaded again on startup; this does
 not restore deleted credentials.
+
+Do not remove `/config/.ha_vscode` during normal upgrades. It contains the
+persistent CLI authentication, VS Code server, and remote extensions.
 
 ## Rollback
 

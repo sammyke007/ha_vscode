@@ -84,8 +84,18 @@ codes are never retried automatically.
   archive, with limits on file size.
 - An existing CLI is preserved. Automatic CLI updates are not included.
 - The CLI starts with `--accept-server-license-terms`, as in upstream.
+- CLI authentication metadata, VS Code server data, and remote extensions are
+  stored persistently under `/config/.ha_vscode` with owner-only permissions.
+- The tunnel reuses its configured name instead of requesting a random name.
 - After a Home Assistant restart or integration reload, the switch stays off.
   Automatic restoration of its previous on-state is not enabled.
+
+After upgrading from a release before 0.2.3, perform GitHub authentication one
+final time when requested. Install remote extensions such as Home Assistant Config
+Helper, YAML, or Color Lens once under **Homeassistant – Installed**. They are then
+stored in `/config/.ha_vscode/extensions` and remain available across tunnel and
+Home Assistant restarts. Existing extensions from the former container-local
+location are not copied automatically.
 
 ## Validation
 

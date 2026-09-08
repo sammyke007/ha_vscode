@@ -32,9 +32,14 @@ architecture_map = {
 class VSCodeDeviceAPI:
     """Own exactly one CLI process and its output reader."""
 
-    def __init__(self, storage_dir):
+    def __init__(self, storage_dir, runtime_dir=None, tunnel_name="homeassistant"):
         self.storage_dir = storage_dir
         self.exePath = os.path.join(storage_dir, "code")
+        self.runtime_dir = Path(runtime_dir or Path(storage_dir) / "runtime")
+        self.cli_data_dir = self.runtime_dir / "cli"
+        self.server_data_dir = self.runtime_dir / "server"
+        self.extensions_dir = self.runtime_dir / "extensions"
+        self.tunnel_name = tunnel_name
         self.proc = None
         self.thread = None
         self.oauthToken = None
@@ -97,6 +102,33 @@ class VSCodeDeviceAPI:
         except (OSError, ValueError, tarfile.TarError) as err:
             raise HAVSCodeDownloadException() from err
 
+    def prepare_runtime(self):
+        """Create persistent VS Code storage with private permissions."""
+        for directory in (
+            self.runtime_dir,
+            self.cli_data_dir,
+            self.server_data_dir,
+            self.extensions_dir,
+        ):
+            directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+            directory.chmod(0o700)
+
+    def tunnel_command(self):
+        """Build a stable tunnel command with explicit persistent storage."""
+        return [
+            self.exePath,
+            "--cli-data-dir",
+            str(self.cli_data_dir),
+            "tunnel",
+            "--server-data-dir",
+            str(self.server_data_dir),
+            "--extensions-dir",
+            str(self.extensions_dir),
+            "--name",
+            self.tunnel_name,
+            "--accept-server-license-terms",
+        ]
+
     def reader(self, proc):
         """Iteration ends at EOF instead of spinning on empty readline results."""
         try:
@@ -154,18 +186,14 @@ class VSCodeDeviceAPI:
                 return
             self.stopTunnel()
             self.install()
+            self.prepare_runtime()
             self.oauthToken = None
             self.devURL = None
             self.last_error = None
             self.last_exit_code = None
             self.stopping = False
             self.proc = subprocess.Popen(
-                [
-                    self.exePath,
-                    "tunnel",
-                    "--random-name",
-                    "--accept-server-license-terms",
-                ],
+                self.tunnel_command(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,

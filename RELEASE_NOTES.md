@@ -3,6 +3,20 @@
 These descriptions are provided for GitHub releases. An entry here does not mean
 that its release has been published.
 
+## v0.2.3 – Persistent VS Code extensions and tunnel data
+
+- Persist CLI authentication under `/config/.ha_vscode/cli`.
+- Persist VS Code server data under `/config/.ha_vscode/server`.
+- Persist remote extensions under `/config/.ha_vscode/extensions`.
+- Reuse the configured tunnel name instead of requesting a random name.
+- Apply owner-only permissions to the runtime directories.
+
+After upgrading, authenticate with GitHub once when requested and reinstall the
+desired remote extensions under **Homeassistant – Installed**. They will then
+remain available across tunnel and Home Assistant restarts.
+
+Installation: update through HACS and restart Home Assistant.
+
 ## v0.2.2 – Authentication notification and guarded retry
 
 - Notify the user in Home Assistant when GitHub authentication is required.
