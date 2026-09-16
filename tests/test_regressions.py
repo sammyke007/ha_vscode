@@ -224,8 +224,18 @@ def test_parser_clears_stale_state_and_strips_ansi(tmp_path):
     api.devURL = "old"
     text = "https://github.com/login/device and use code \x1b[1mABCD-1234\x1b[0m\nhttps://vscode.dev/tunnel/test-name/\n"
     api.reader(SimpleNamespace(stdout=io.StringIO(text), poll=lambda: None))
-    assert api.devURL == "https://vscode.dev/tunnel/test-name/"
+    assert api.devURL == "https://vscode.dev/tunnel/test-name/config"
     assert api.oauthToken is None
+
+
+def test_tunnel_url_opens_config_workspace(tmp_path):
+    api = VSCodeDeviceAPI(str(tmp_path))
+
+    assert api.checkForDevURL("https://vscode.dev/tunnel/homeassistant/") == (
+        "https://vscode.dev/tunnel/homeassistant/config"
+    )
+    assert api.devURL == "https://vscode.dev/tunnel/homeassistant/config"
+
 
 
 def test_successful_probe_enables_exactly_one_retry(tmp_path):
