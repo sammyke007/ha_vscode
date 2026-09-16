@@ -256,7 +256,7 @@ class VSCodeDeviceAPI:
         match = re.search(r"https://vscode\.dev/tunnel/[A-Za-z0-9_-]+/?", line)
         if match:
             self.oauthToken = None
-            self.devURL = match[0]
+            self.devURL = match[0].rstrip("/") + "/config"
             if self.probe_owner is not None:
                 self.retry_after_probe = True
             self._notify_status()
