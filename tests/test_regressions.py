@@ -237,7 +237,6 @@ def test_tunnel_url_opens_config_workspace(tmp_path):
     assert api.devURL == "https://vscode.dev/tunnel/homeassistant/config"
 
 
-
 def test_successful_probe_enables_exactly_one_retry(tmp_path):
     api = VSCodeDeviceAPI(str(tmp_path))
     api.probe_owner = object()
