@@ -50,12 +50,12 @@ remote connection works. Check the entity attributes as well:
 | Attribute | Meaning |
 | --- | --- |
 | `tunnel_status` | `starting`, `auth_required`, `ready`, or `stopped` |
-| `tunnel_url` | URL reported by the current process, available only when `ready` |
+| `tunnel_url` | Tunnel URL opening the Home Assistant `/config` workspace, available only when `ready` |
 | `last_error_category` | Recognized error category, if available |
 | `last_exit_code` | Exit code from the most recently stopped CLI process |
 | `configuration_in_progress` | An authentication check has reserved the process |
 
-`ready` means the CLI reported a URL; it is not a continuous network health check.
+`ready` means the CLI reported a URL; it is not a continuous network health check. The integration appends `/config` so the entity link opens the Home Assistant configuration workspace instead of the container root.
 Attributes follow Home Assistant's normal polling cycle.
 
 Unexpected process exits are logged with the exit code when the output reader
