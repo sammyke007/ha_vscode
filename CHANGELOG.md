@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4
+
+- Open the tunnel URL directly in the Home Assistant `/config` workspace.
+- Prevent the entity's tunnel link from opening the container root (`/`), which
+  could trigger expensive full-filesystem searches in VS Code.
+- Add regression coverage for tunnel URL normalization.
+
 ## 0.2.3
 
 - Store VS Code CLI metadata, server data, and remote extensions in dedicated
