@@ -3,6 +3,14 @@
 These descriptions are provided for GitHub releases. An entry here does not mean
 that its release has been published.
 
+## v0.2.4 – Open the correct Home Assistant workspace
+
+- Make the `tunnel_url` entity attribute open `/config` directly.
+- Avoid opening the container root and the resulting full-filesystem VS Code scans.
+- Add regression coverage for URL normalization.
+
+Installation: update through HACS, restart Home Assistant, and restart the tunnel.
+
 ## v0.2.3 – Persistent VS Code extensions and tunnel data
 
 - Persist CLI authentication under `/config/.ha_vscode/cli`.
